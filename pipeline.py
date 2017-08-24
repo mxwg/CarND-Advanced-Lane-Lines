@@ -11,7 +11,7 @@ from lane_finding.undistort import undistort, warp_to_lane
 from lane_finding.threshold import threshold_basic
 from lane_finding.fit_lines import fit_lanes, track_lanes, plot_windows, \
         plot_lanes, plot_lanes_only, augment_image_with_lane
-from lane_finding.fit_lines import write_curvature_and_offset, info
+from lane_finding.fit_lines import write_curvature_and_offset, write_info
 
 # Get images
 input_folder = "test_images/track3"
@@ -51,7 +51,7 @@ for image in image_names[0:10]:
         curves = plot_lanes(binary_warped, left_fit, right_fit, left_lane_inds,
                             right_lane_inds, line.detected)
         curves = plot_windows(curves, windows)
-        curves = info(curves, "detected" if line.detected else "not detected")
+        curves = write_info(curves, "detected" if line.detected else "not detected")
         if line.best_fit_left is not None:
             curves = plot_lanes_only(curves, line.best_fit_left, line.best_fit_right)
         save("curves", image, curves)

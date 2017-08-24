@@ -190,11 +190,13 @@ def write_curvature_and_offset(img, radius, dist):
     cv2.putText(img, txt, (100, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2)
     return img
 
-def info(img, txt):
-    cv2.putText(img, txt, (400, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2)
+def write_info(img, txt):
+    """Write the given text to the lower part of the image."""
+    cv2.putText(img, txt, (400, 600), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2)
     return img
 
 def augment_image_with_lane(image, left_fit, right_fit):
+    """Visualize the lanes in the unwarped image."""
     ploty = np.linspace(0, image.shape[0]-1, image.shape[0] )
     left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
     right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
@@ -212,5 +214,4 @@ def augment_image_with_lane(image, left_fit, right_fit):
     newwarp = warp_to_lane(color_warp, inverse=True)
     # Combine the result with the original image
     result = cv2.addWeighted(image, 1, newwarp, 0.3, 0)
-
     return result
