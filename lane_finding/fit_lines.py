@@ -6,15 +6,19 @@ GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 YELLOW = (255, 255, 0)
-margin = 100
+
 image_height = 720
 image_width = 1280
+ideal_image_center = int(image_width / 2)
 
+# curvature/offset calculation parameters
 ym_per_pix = 30/image_height # meters per pixel in y dimension
 xm_per_pix = 3.7/700 # meters per pixel in x dimension
-ideal_image_center = int(image_width / 2)
+
+# sliding window parameters
 n_sliding_windows = 9
 min_pix_per_window = 50
+margin = 100
 
 def calculate_curvature_in_meters(x,y):
     """Calculate the curvature of a polynomial in meters."""
@@ -150,13 +154,13 @@ def plot_lanes(binary_warped, left_fit, right_fit, left_lane_inds,\
     out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = RED
     out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = BLUE
 
-    # plot lane centers
+    # plot lane polynomials
     points_left = np.int32(np.stack([left_fitx, ploty], axis=1))
     points_right = np.int32(np.stack([right_fitx, ploty], axis=1))
     cv2.polylines(out_img, [points_left], False, YELLOW, thickness=2)
     cv2.polylines(out_img, [points_right], False, YELLOW, thickness=2)
 
-    # draw offset
+    # draw left and right intersections, as well as ideal lane center and actual center
     size = 5
     lx = left_fit[0]*image_height**2 + left_fit[1]*image_height + left_fit[2]
     rx = right_fit[0]*image_height**2 + right_fit[1]*image_height + right_fit[2]
