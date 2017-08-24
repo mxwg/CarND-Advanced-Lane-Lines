@@ -29,13 +29,8 @@ def process_image(img):
             line.update(left_fit, right_fit, cl, cr)
         curves = plot_lanes(binary_warped, left_fit, right_fit, left_lane_inds, right_lane_inds)
         curves = plot_windows(curves, windows)
-        #lanes = augment_image_with_lane(undist, left_fit, right_fit)
         lanes = augment_image_with_lane(undist, line.best_fit_left, line.best_fit_right)
-        #radius = get_radii_m(binary_warped, left_lane_inds, right_lane_inds, left_fit, right_fit)
-        #offset = get_offset_m(binary_warped, left_lane_inds, right_lane_inds)
         offset = get_offset(line.best_fit_left, line.best_fit_right)
-        #radius = (252, 252)
-        #offset = 0.2
         lanes = write_text(lanes, line.radius_of_curvature, offset)
     except TypeError as e:
         print(e)

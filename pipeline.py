@@ -15,6 +15,7 @@ from lane_finding.fit_lines import get_radii_m, get_offset, write_text, info
 
 # Get images
 input_folder = "test_images/track3"
+input_folder = "images_project_video"
 output_folder = "output_images"
 try:
     shutil.rmtree(output_folder)
@@ -35,45 +36,29 @@ for image in image_names:
     print("working on image {}".format(image))
     try:
         img = mplimg.imread(image)
-        img = img[:,:,:3]
         undist = undistort(img)
-        #save("undist", image, undist)
         warped = warp_to_lane(undist)
-        #save("a_warped", image, warped)
-        gray = cv2.cvtColor(undist, cv2.COLOR_RGB2GRAY)
-        #save("gray", image, gray, cmap='gray')
-        #binary =  threshold_basic(undist)
-        #save("binary", image, binary, cmap='gray')
-        #binary_warped = warp_to_lane(binary)
         binary_warped = threshold_basic(warped)
         #save("binary_warped", image, binary_warped, cmap='gray')
         if not line.detected:
             print("Full detection...")
             left_fit, right_fit, left_lane_inds, right_lane_inds, cl, cr, windows = fit_lanes(binary_warped)
-            print("fit", left_fit)
             line.update(left_fit, right_fit, cl, cr, force=True)
         else:
             left_fit, right_fit, left_lane_inds, right_lane_inds, cl, cr, windows = \
             track_lanes(binary_warped, line.best_fit_left, line.best_fit_right)
             line.update(left_fit, right_fit, cl, cr)
-
-        curves = plot_lanes(binary_warped, left_fit, right_fit,\
-                            left_lane_inds, right_lane_inds, line.detected)
+        curves = plot_lanes(binary_warped, left_fit, right_fit, left_lane_inds,
+                            right_lane_inds, line.detected)
         curves = plot_windows(curves, windows)
         curves = info(curves, "detected" if line.detected else "not detected")
         if line.best_fit_left is not None:
             curves = plot_lanes_only(curves, binary_warped,\
                                      line.best_fit_left, line.best_fit_right)
         save("curves", image, curves)
-        #lanes = augment_image_with_lane(undist, left_fit, right_fit)
-        lanes = augment_image_with_lane(undist, line.best_fit_left,\
-                                        line.best_fit_right)
-        #dist = get_offset_m(binary_warped, left_lane_inds, right_lane_inds)
-        dist = get_offset(line.best_fit_left, line.best_fit_right)
-        txt = "Radius: {:5.2f} m\nRadius: {:5.2f} m\nVehicle is {:.2f} m {} of the center.".format(
-        cl, cr, abs(dist), "left" if dist < 0.0 else "right")
-        print(txt)
-        lanes = write_text(lanes, line.radius_of_curvature, dist)
+        lanes = augment_image_with_lane(undist, line.best_fit_left, line.best_fit_right)
+        offset = get_offset(line.best_fit_left, line.best_fit_right)
+        lanes = write_text(lanes, line.radius_of_curvature, offset)
         save("lanes", image, lanes)
     except TypeError as e:
         print("Error:", e)
