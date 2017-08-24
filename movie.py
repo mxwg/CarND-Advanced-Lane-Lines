@@ -7,7 +7,7 @@ from lane_finding.undistort import undistort, warp_to_lane
 from lane_finding.threshold import threshold_basic
 from lane_finding.fit_lines import fit_lanes, track_lanes
 from lane_finding.fit_lines import plot_windows, plot_lanes, augment_image_with_lane, write_text, track_lanes
-from lane_finding.lane import Line
+from lane_finding.line import Line
 
 # Import everything needed to edit/save/watch video clips
 from moviepy.editor import VideoFileClip

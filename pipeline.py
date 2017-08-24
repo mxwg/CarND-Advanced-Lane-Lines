@@ -30,7 +30,7 @@ def save(prefix, image_name, image, cmap=None):
 image_names = glob.glob(os.path.join(input_folder, "output*.jpg"))
 
 np.set_printoptions(precision=6, suppress=True)
-from lane_finding.lane import Line
+from lane_finding.line import Line
 line = Line()
 for image in image_names:
     print("working on image {}".format(image))
