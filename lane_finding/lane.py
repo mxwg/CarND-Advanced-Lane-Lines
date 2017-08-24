@@ -69,7 +69,7 @@ class Line():
         if dl < max_diff and dr < max_diff:
             return True
         else:
-            print("diff left: {}, right: {}".format(dl, dr))
+            print("diff left: {:.2f}, right: {:.2f}".format(dl, dr))
         return False
 
     def update(self, left_fit, right_fit, cl, cr, force=False):

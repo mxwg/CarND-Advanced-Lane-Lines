@@ -79,8 +79,8 @@ def fit_lanes(binary_warped):
     rx = right_fit[2]
     c = lx + (rx-lx)/2
     cm = (640-c) * xm_per_pix
-    print("neft {} opt {} center {} right {} -> {}".format(lx,\
-            640, c, rx, cm))
+    #print("neft {} opt {} center {} right {} -> {}".format(lx,\
+            #640, c, rx, cm))
 
     return left_fit, right_fit, left_lane_inds, right_lane_inds, curve_left,\
             curve_right, windows
@@ -115,8 +115,8 @@ def track_lanes(binary_warped, left_fit, right_fit):
     rx = right_fit[2]
     c = lx + (rx-lx)/2
     cm = (640-c) * xm_per_pix
-    print("teft {} opt {} center {} right {} -> {}".format(lx,\
-            640, c, rx, cm))
+    #print("teft {} opt {} center {} right {} -> {}".format(lx,\
+            #640, c, rx, cm))
 
     return left_fit, right_fit, left_lane_inds, right_lane_inds, \
             curve_left, curve_right, []
