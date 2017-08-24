@@ -32,13 +32,16 @@ image_names = glob.glob(os.path.join(input_folder, "output*.jpg"))
 np.set_printoptions(precision=6, suppress=True)
 from lane_finding.line import Line
 line = Line()
-for image in image_names[0:10]:
+for image in image_names[0:30]:
     print("working on image {}".format(image))
     try:
         img = mplimg.imread(image)
         undist = undistort(img)
+        save("1_undist", image, undist)
         warped = warp_to_lane(undist)
+        save("2_warped", image, warped)
         binary_warped = threshold_basic(warped)
+        save("3_binary_warped", image, binary_warped, cmap='gray')
         #save("binary_warped", image, binary_warped, cmap='gray')
         if not line.detected:
             print("Full detection...")
@@ -51,13 +54,13 @@ for image in image_names[0:10]:
         curves = plot_lanes(binary_warped, left_fit, right_fit, left_lane_inds,
                             right_lane_inds, line.detected)
         curves = plot_windows(curves, windows)
-        curves = write_info(curves, "detected" if line.detected else "not detected")
+        #curves = write_info(curves, "detected" if line.detected else "not detected")
         if line.best_fit_left is not None:
             curves = plot_lanes_only(curves, line.best_fit_left, line.best_fit_right)
-        save("curves", image, curves)
+        save("4_curves", image, curves)
         lanes = augment_image_with_lane(undist, line.best_fit_left, line.best_fit_right)
         lanes = write_curvature_and_offset(lanes, line.radius_of_curvature, line.line_base_pos)
-        save("lanes", image, lanes)
+        save("5_lanes", image, lanes)
     except TypeError as e:
         print("Error:", e)
 
