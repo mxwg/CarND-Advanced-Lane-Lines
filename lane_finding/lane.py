@@ -3,6 +3,8 @@ import numpy as np
 import math
 from collections import deque
 
+from lane_finding.fit_lines import xm_per_pix
+
 class Line():
     def __init__(self):
         self.n = 5
@@ -14,23 +16,14 @@ class Line():
         self.all_cr = deque()
         # x values of the last n fits of the line
         self.recent_xfitted = deque([])
-        #average x values of the fitted line over the last n iterations
-        self.bestx = None
         #polynomial coefficients averaged over the last n iterations
         self.best_fit_left = None
         self.best_fit_right = None
-        #polynomial coefficients for the most recent fit
-        self.current_fit = [np.array([False])]
         #radius of curvature of the line in some units
         self.radius_of_curvature = None
         #distance in meters of vehicle center from the line
         self.line_base_pos = None
-        #difference in fit coefficients between last and new fits
-        self.diffs = np.array([0,0,0], dtype='float')
-        #x values for detected line pixels
-        self.allx = None
         #y values for detected line pixels
-        self.ally = None
         self.leftx = None
         self.rightx = None
 
@@ -53,9 +46,17 @@ class Line():
         cl = np.sum(self.all_cl)/len(self.all_cl)
         cr = np.sum(self.all_cr)/len(self.all_cr)
         self.radius_of_curvature = (cl + cr) / 2
+        self.line_base_pos = self.compute_offset()
 
     def intersect(self, fit):
         return fit[0]*720**2 + fit[1]*720 + fit[2]
+
+    def compute_offset(self):
+        lx = self.intersect(self.best_fit_left)
+        rx = self.intersect(self.best_fit_right)
+        center = lx + (rx-lx)/2
+        center_m = (640-center) * xm_per_pix
+        return center_m
 
     def sane(self, left_fit, right_fit):
         if self.leftx is None: # accept the first measurment

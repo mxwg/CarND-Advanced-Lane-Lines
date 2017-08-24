@@ -5,10 +5,10 @@ import numpy as np
 import cv2
 from lane_finding.undistort import undistort, warp_to_lane
 from lane_finding.threshold import threshold_basic
-from lane_finding.fit_lines import fit_lanes, plot_windows, plot_lanes,\
-augment_image_with_lane, write_text, track_lanes
-from lane_finding.fit_lines import get_radii_m, get_offset
+from lane_finding.fit_lines import fit_lanes, track_lanes
+from lane_finding.fit_lines import plot_windows, plot_lanes, augment_image_with_lane, write_text, track_lanes
 from lane_finding.lane import Line
+
 # Import everything needed to edit/save/watch video clips
 from moviepy.editor import VideoFileClip
 from IPython.display import HTML
@@ -30,8 +30,7 @@ def process_image(img):
         curves = plot_lanes(binary_warped, left_fit, right_fit, left_lane_inds, right_lane_inds)
         curves = plot_windows(curves, windows)
         lanes = augment_image_with_lane(undist, line.best_fit_left, line.best_fit_right)
-        offset = get_offset(line.best_fit_left, line.best_fit_right)
-        lanes = write_text(lanes, line.radius_of_curvature, offset)
+        lanes = write_text(lanes, line.radius_of_curvature, line.line_base_pos)
     except TypeError as e:
         print(e)
         lanes = undist

@@ -212,31 +212,6 @@ def get_radii_m(binary_warped, left_lane_inds, right_lane_inds, left_fit, right_
     # Now our radius of curvature is in meters
     return (left_curverad, right_curverad)
 
-
-def get_offset_m(binary_warped, left_lane_inds, right_lane_inds):
-    nonzero = binary_warped.nonzero()
-    nonzerox = np.array(nonzero[1])
-    leftx = nonzerox[left_lane_inds]
-    rightx = nonzerox[right_lane_inds]
-    lane_width_px = rightx[-1] - leftx[-1]
-    lane_center_px = leftx[-1] + lane_width_px/2
-    ideal_center_px = 1280/2
-    #print("left {} opt {} center {} right {}".format(leftx[-1], ideal_center_px,\
-                                              #lane_center_px, rightx[-1]))
-    offset_m = (ideal_center_px-lane_center_px)*xm_per_pix
-    return offset_m
-
-def get_offset(left_fit, right_fit):
-    lx = left_fit[0]*720**2 + left_fit[1]*720 + left_fit[2]
-    rx = right_fit[0]*720**2 + right_fit[1]*720 + right_fit[2]
-    #lx = left_fit[2]
-    #rx = right_fit[2]
-    c = lx + (rx-lx)/2
-    cm = (640-c) * xm_per_pix
-    #print("teft {} opt {} center {} right {} -> {}".format(lx,\
-            #640, c, rx, cm))
-    return cm
-
 def write_text(img, radius, dist):
     txt = "Radius of Curvature: {:5.0f} m, Vehicle is {:.2f} m {} of the center.".format(
     radius, abs(dist), "left" if dist < 0.0 else "right")
