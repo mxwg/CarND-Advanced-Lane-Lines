@@ -11,7 +11,7 @@ from lane_finding.undistort import undistort, warp_to_lane
 from lane_finding.threshold import threshold_basic
 from lane_finding.fit_lines import fit_lanes, track_lanes, plot_windows, \
         plot_lanes, plot_lanes_only, augment_image_with_lane
-from lane_finding.fit_lines import get_radii_m, write_text, info
+from lane_finding.fit_lines import write_text, info
 
 # Get images
 input_folder = "test_images/track3"

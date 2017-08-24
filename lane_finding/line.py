@@ -3,7 +3,7 @@ import numpy as np
 import math
 from collections import deque
 
-from lane_finding.fit_lines import xm_per_pix
+from lane_finding.fit_lines import xm_per_pix, ideal_image_center, image_height
 
 class Line():
     def __init__(self):
@@ -54,24 +54,23 @@ class Line():
         self.line_base_pos = self.compute_offset()
 
     def intersect(self, fit):
-        return fit[0]*720**2 + fit[1]*720 + fit[2]
+        return fit[0]*image_height**2 + fit[1]*image_height + fit[2]
 
     def compute_offset(self):
-        ideal_center = 1280 / 2
         center = self.leftx + (self.rightx-self.leftx)/2
-        center_m = (ideal_center-center) * xm_per_pix
+        center_m = (ideal_image_center-center) * xm_per_pix
         return center_m
 
     def sane(self, left_fit, right_fit):
         if self.leftx is None: # accept the first measurment
             return True
 
-        max_diff = 10
+        max_diff_pixels = 10
         leftx = self.intersect(left_fit)
         rightx = self.intersect(right_fit)
         dl = math.fabs(leftx-self.leftx)
         dr = math.fabs(rightx-self.rightx)
-        if dl < max_diff and dr < max_diff:
+        if dl < max_diff_pixels and dr < max_diff_pixels:
             return True
         else:
             print("diff left: {:.2f}, right: {:.2f}".format(dl, dr))
