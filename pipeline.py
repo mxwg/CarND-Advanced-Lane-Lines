@@ -36,6 +36,7 @@ for image in image_names[0:30]:
     print("working on image {}".format(image))
     try:
         img = mplimg.imread(image)
+        save("0_original", image, img)
         undist = undistort(img)
         save("1_undist", image, undist)
         warped = warp_to_lane(undist)
@@ -43,17 +44,20 @@ for image in image_names[0:30]:
         binary_warped = threshold_basic(warped)
         save("3_binary_warped", image, binary_warped, cmap='gray')
         #save("binary_warped", image, binary_warped, cmap='gray')
+        full_detection = False
         if not line.detected:
             print("Full detection...")
             left_fit, right_fit, left_lane_inds, right_lane_inds, cl, cr, windows = fit_lanes(binary_warped)
             line.update(left_fit, right_fit, cl, cr, force=True)
+            full_detection = True
         else:
             left_fit, right_fit, left_lane_inds, right_lane_inds, cl, cr, windows = \
             track_lanes(binary_warped, line.best_fit_left, line.best_fit_right)
             line.update(left_fit, right_fit, cl, cr)
         curves = plot_lanes(binary_warped, left_fit, right_fit, left_lane_inds,
-                            right_lane_inds, line.detected)
-        curves = plot_windows(curves, windows)
+                            right_lane_inds, not full_detection)
+        if full_detection:
+            curves = plot_windows(curves, windows)
         #curves = write_info(curves, "detected" if line.detected else "not detected")
         if line.best_fit_left is not None:
             curves = plot_lanes_only(curves, line.best_fit_left, line.best_fit_right)

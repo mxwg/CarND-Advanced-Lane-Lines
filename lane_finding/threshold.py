@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 def sobelx(img, t_min, t_max):
-    """Apply the sobel operator in the x direction and return a binary image."""
+    """Apply the sobel operator in the x direction on a grayscale version of the image and return a binary image."""
     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
     sobelx = cv2.Sobel(gray, cv2.CV_64F, 1, 0) # Take the derivative in x
     abs_sobelx = np.absolute(sobelx) # Absolute x derivative to accentuate lines away from horizontal
@@ -33,7 +33,7 @@ def combine_sparse(images, limit=15*1e6):
     return combined
 
 def threshold_basic(img):
-    """Threshold a grayscale image and return the binary image."""
+    """Threshold a color image and return the binary image."""
     assert len(img.shape) == 3, "only color images are supported"
 
     # create a binary image using the sobel operator
