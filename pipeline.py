@@ -11,7 +11,7 @@ from lane_finding.undistort import undistort, warp_to_lane
 from lane_finding.threshold import threshold_basic
 from lane_finding.fit_lines import fit_lanes, track_lanes, plot_windows, \
         plot_lanes, plot_lanes_only, augment_image_with_lane
-from lane_finding.fit_lines import write_text, info
+from lane_finding.fit_lines import write_curvature_and_offset, info
 
 # Get images
 input_folder = "test_images/track3"
@@ -32,7 +32,7 @@ image_names = glob.glob(os.path.join(input_folder, "output*.jpg"))
 np.set_printoptions(precision=6, suppress=True)
 from lane_finding.line import Line
 line = Line()
-for image in image_names:
+for image in image_names[0:10]:
     print("working on image {}".format(image))
     try:
         img = mplimg.imread(image)
@@ -53,11 +53,10 @@ for image in image_names:
         curves = plot_windows(curves, windows)
         curves = info(curves, "detected" if line.detected else "not detected")
         if line.best_fit_left is not None:
-            curves = plot_lanes_only(curves, binary_warped,\
-                                     line.best_fit_left, line.best_fit_right)
+            curves = plot_lanes_only(curves, line.best_fit_left, line.best_fit_right)
         save("curves", image, curves)
         lanes = augment_image_with_lane(undist, line.best_fit_left, line.best_fit_right)
-        lanes = write_text(lanes, line.radius_of_curvature, line.line_base_pos)
+        lanes = write_curvature_and_offset(lanes, line.radius_of_curvature, line.line_base_pos)
         save("lanes", image, lanes)
     except TypeError as e:
         print("Error:", e)
