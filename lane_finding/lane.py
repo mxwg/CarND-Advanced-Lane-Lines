@@ -48,22 +48,29 @@ class Line():
     def average(self):
         self.best_fit_left = np.sum(self.all_left_fits, axis=0) / len(self.all_left_fits)
         self.best_fit_right = np.sum(self.all_right_fits, axis=0) / len(self.all_right_fits)
-        self.leftx = self.best_fit_left[2]
-        self.rightx = self.best_fit_right[2]
+        self.leftx = self.intersect(self.best_fit_left)
+        self.rightx = self.intersect(self.best_fit_right)
         cl = np.sum(self.all_cl)/len(self.all_cl)
         cr = np.sum(self.all_cr)/len(self.all_cr)
         self.radius_of_curvature = (cl + cr) / 2
 
+    def intersect(self, fit):
+        return fit[0]*720**2 + fit[1]*720 + fit[2]
+
     def sane(self, left_fit, right_fit):
         if self.leftx is None: # accept the first measurment
             return True
-        max_diff = 15
-        leftx = left_fit[2]
-        rightx = right_fit[2]
+
+        max_diff = 10
+        leftx = self.intersect(left_fit)
+        rightx = self.intersect(right_fit)
         dl = math.fabs(leftx-self.leftx)
         dr = math.fabs(rightx-self.rightx)
-        if dl < 10 and dr < 10:
+        if dl < max_diff and dr < max_diff:
             return True
+        else:
+            print("diff left: {}, right: {}".format(dl, dr))
+        return False
 
     def update(self, left_fit, right_fit, cl, cr, force=False):
         if self.sane(left_fit, right_fit) or force:

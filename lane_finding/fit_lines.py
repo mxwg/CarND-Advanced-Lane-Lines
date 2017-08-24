@@ -221,8 +221,8 @@ def get_offset_m(binary_warped, left_lane_inds, right_lane_inds):
     lane_width_px = rightx[-1] - leftx[-1]
     lane_center_px = leftx[-1] + lane_width_px/2
     ideal_center_px = 1280/2
-    print("left {} opt {} center {} right {}".format(leftx[-1], ideal_center_px,\
-                                              lane_center_px, rightx[-1]))
+    #print("left {} opt {} center {} right {}".format(leftx[-1], ideal_center_px,\
+                                              #lane_center_px, rightx[-1]))
     offset_m = (ideal_center_px-lane_center_px)*xm_per_pix
     return offset_m
 
@@ -233,14 +233,18 @@ def get_offset(left_fit, right_fit):
     #rx = right_fit[2]
     c = lx + (rx-lx)/2
     cm = (640-c) * xm_per_pix
-    print("teft {} opt {} center {} right {} -> {}".format(lx,\
-            640, c, rx, cm))
+    #print("teft {} opt {} center {} right {} -> {}".format(lx,\
+            #640, c, rx, cm))
     return cm
 
 def write_text(img, radius, dist):
     txt = "Radius of Curvature: {:5.0f} m, Vehicle is {:.2f} m {} of the center.".format(
     radius, abs(dist), "left" if dist < 0.0 else "right")
     cv2.putText(img, txt, (100, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2)
+    return img
+
+def info(img, txt):
+    cv2.putText(img, txt, (400, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2)
     return img
 
 def augment_image_with_lane(image, left_fit, right_fit):
