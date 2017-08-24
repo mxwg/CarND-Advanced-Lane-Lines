@@ -32,7 +32,8 @@ class Line():
         # intersection of the right lane with the bottom of the image
         self.rightx = None
 
-    def add(self, left_fit, right_fit, cl, cr):
+    def _add(self, left_fit, right_fit, cl, cr):
+        """Add the current measurement to the lists used for averaging."""
         self.all_left_fits.append(left_fit)
         self.all_right_fits.append(right_fit)
         self.all_left_curvatures.append(cl)
@@ -43,31 +44,28 @@ class Line():
             self.all_left_curvatures.popleft()
             self.all_right_curvatures.popleft()
 
-    def average(self):
+    def _average(self):
+        """Update all averages from the lists of most recent measurements."""
         self.best_fit_left = np.sum(self.all_left_fits, axis=0) / len(self.all_left_fits)
         self.best_fit_right = np.sum(self.all_right_fits, axis=0) / len(self.all_right_fits)
-        self.leftx = self.intersect(self.best_fit_left)
-        self.rightx = self.intersect(self.best_fit_right)
+        self.leftx = self._intersect(self.best_fit_left)
+        self.rightx = self._intersect(self.best_fit_right)
         cl = np.sum(self.all_left_curvatures)/len(self.all_left_curvatures)
         cr = np.sum(self.all_right_curvatures)/len(self.all_right_curvatures)
         self.radius_of_curvature = (cl + cr) / 2
-        self.line_base_pos = self.compute_offset()
+        self.line_base_pos = self._compute_offset()
 
-    def intersect(self, fit):
-        return fit[0]*image_height**2 + fit[1]*image_height + fit[2]
-
-    def compute_offset(self):
-        center = self.leftx + (self.rightx-self.leftx)/2
-        center_m = (ideal_image_center-center) * xm_per_pix
-        return center_m
-
-    def sane(self, left_fit, right_fit):
-        if self.leftx is None: # accept the first measurment
+    def _check_measurement(self, left_fit, right_fit):
+        """Check whether the current measurement fits with the tracked average."""
+        # always accept the first measurement
+        if self.leftx is None:
             return True
 
+        # reject line fits that differ too much from the average start of the
+        # lane at the bottom of the image
         max_diff_pixels = 10
-        leftx = self.intersect(left_fit)
-        rightx = self.intersect(right_fit)
+        leftx = self._intersect(left_fit)
+        rightx = self._intersect(right_fit)
         dl = math.fabs(leftx-self.leftx)
         dr = math.fabs(rightx-self.rightx)
         if dl < max_diff_pixels and dr < max_diff_pixels:
@@ -76,13 +74,24 @@ class Line():
             print("diff left: {:.2f}, right: {:.2f}".format(dl, dr))
         return False
 
+    def _compute_offset(self):
+        """Calculate the offset of the center of the lane from the ideal."""
+        center = self.leftx + (self.rightx-self.leftx)/2
+        center_m = (ideal_image_center-center) * xm_per_pix
+        return center_m
+
+    def _intersect(self, fit):
+        """Calculate the intersection of a fit with the bottom of the image."""
+        return fit[0]*image_height**2 + fit[1]*image_height + fit[2]
+
     def update(self, left_fit, right_fit, cl, cr, force=False):
-        if self.sane(left_fit, right_fit) or force:
-            self.add(left_fit, right_fit, cl, cr)
-            self.average()
+        """Update the line tracker with the current estimations of fit and curvature."""
+        if self._check_measurement(left_fit, right_fit) or force:
+            self._add(left_fit, right_fit, cl, cr)
+            self._average()
             self.detected = True
         else:
-            print("Ignoring insane measurement.")
+            print("Rejecting current measurement.")
             self.detected = False
         return self.detected
 
