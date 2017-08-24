@@ -19,6 +19,7 @@ def _load_calibration():
 
 def undistort(image):
     """Undistorts an image using a pre-computed camera calibration."""
+    assert image.shape[2] == 3, "only three-channel images are supported!"
     if mtx is None or dist is None:
         _load_calibration()
     undistorted = cv2.undistort(image, mtx, dist, None, mtx)
