@@ -6,10 +6,18 @@ GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 YELLOW = (255, 255, 0)
+margin = 100
+ym_per_pix = 30/720 # meters per pixel in y dimension
+xm_per_pix = 3.7/700 # meters per pixel in x dimension
+
+def curve_m(x,y):
+    y_eval = 720
+    fit_cr = np.polyfit(y*ym_per_pix, x*xm_per_pix, 2)
+    curverad = ((1 + (2*fit_cr[0]*y_eval*ym_per_pix + fit_cr[1])**2)**1.5) / np.absolute(2*fit_cr[0])
+    return curverad
 
 def fit_lanes(binary_warped):
     nwindows = 9
-    margin = 100
     minpix = 50
     histogram = np.sum(binary_warped[binary_warped.shape[0]//2:,:], axis=0)
     midpoint = np.int(histogram.shape[0]//2)
@@ -63,7 +71,19 @@ def fit_lanes(binary_warped):
     # Fit a second order polynomial to each
     left_fit = np.polyfit(lefty, leftx, 2)
     right_fit = np.polyfit(righty, rightx, 2)
-    return left_fit, right_fit, left_lane_inds, right_lane_inds, windows
+
+    curve_left = curve_m(leftx, lefty)
+    curve_right = curve_m(rightx, righty)
+
+    lx = left_fit[2]
+    rx = right_fit[2]
+    c = lx + (rx-lx)/2
+    cm = (640-c) * xm_per_pix
+    print("neft {} opt {} center {} right {} -> {}".format(lx,\
+            640, c, rx, cm))
+
+    return left_fit, right_fit, left_lane_inds, right_lane_inds, curve_left,\
+            curve_right, windows
 
 def track_lanes(binary_warped, left_fit, right_fit):
     # Assume you now have a new warped binary image
@@ -72,7 +92,6 @@ def track_lanes(binary_warped, left_fit, right_fit):
     nonzero = binary_warped.nonzero()
     nonzeroy = np.array(nonzero[0])
     nonzerox = np.array(nonzero[1])
-    margin = 100
     left_lane_inds = ((nonzerox > (left_fit[0]*(nonzeroy**2) + left_fit[1]*nonzeroy + left_fit[2] - margin)) & (nonzerox < (left_fit[0]*(nonzeroy**2) + left_fit[1]*nonzeroy + left_fit[2] + margin)))
     right_lane_inds = ((nonzerox > (right_fit[0]*(nonzeroy**2) + right_fit[1]*nonzeroy + right_fit[2] - margin)) & (nonzerox < (right_fit[0]*(nonzeroy**2) + right_fit[1]*nonzeroy + right_fit[2] + margin)))
 
@@ -89,7 +108,18 @@ def track_lanes(binary_warped, left_fit, right_fit):
     #left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
     #right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
 
-    return left_fit, right_fit, left_lane_inds, right_lane_inds, []
+    curve_left = curve_m(leftx, lefty)
+    curve_right = curve_m(rightx, righty)
+
+    lx = left_fit[2]
+    rx = right_fit[2]
+    c = lx + (rx-lx)/2
+    cm = (640-c) * xm_per_pix
+    print("teft {} opt {} center {} right {} -> {}".format(lx,\
+            640, c, rx, cm))
+
+    return left_fit, right_fit, left_lane_inds, right_lane_inds, \
+            curve_left, curve_right, []
 
 def plot_windows(out_img, w):
     for i in range(0, len(w), 4):
@@ -112,7 +142,6 @@ def plot_lanes(binary_warped, left_fit, right_fit, left_lane_inds,\
     if tracked:
         # Generate a polygon to illustrate the search window area
         # And recast the x and y points into usable format for cv2.fillPoly()
-        margin = 100
         left_line_window1 = np.array([np.transpose(np.vstack([left_fitx-margin, ploty]))])
         left_line_window2 = np.array([np.flipud(np.transpose(np.vstack([left_fitx+margin, ploty])))])
         left_line_pts = np.hstack((left_line_window1, left_line_window2))
@@ -136,8 +165,34 @@ def plot_lanes(binary_warped, left_fit, right_fit, left_lane_inds,\
     cv2.polylines(out_img, [points_left], False, YELLOW, thickness=2)
     cv2.polylines(out_img, [points_right], False, YELLOW, thickness=2)
 
+    # draw offset
+    lx = left_fit[0]*720**2 + left_fit[1]*720 + left_fit[2]
+    rx = right_fit[0]*720**2 + right_fit[1]*720 + right_fit[2]
+    c = int(lx + (rx-lx)/2)
+    cv2.circle(out_img, (int(lx), 720-2*5), 5, RED, 5)
+    cv2.circle(out_img, (int(rx), 720-2*5), 5, RED, 5)
+    cv2.circle(out_img, (640, 720-2*5), 5, GREEN, 5)
+    cv2.circle(out_img, (c, 720-2*5), 5, YELLOW, 5)
+
     return out_img
 
+def plot_lanes_only(out_img, binary_warped, left_fit, right_fit):
+    #nonzero = binary_warped.nonzero()
+    #nonzeroy = np.array(nonzero[0])
+    #nonzerox = np.array(nonzero[1])
+    #out_img = np.dstack((binary_warped, binary_warped, binary_warped))*255
+    # Generate x and y values for plotting
+    ploty = np.linspace(0, binary_warped.shape[0]-1, binary_warped.shape[0] )
+    left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
+    right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
+
+    # plot lane centers
+    points_left = np.int32(np.stack([left_fitx, ploty], axis=1))
+    points_right = np.int32(np.stack([right_fitx, ploty], axis=1))
+    cv2.polylines(out_img, [points_left], False, GREEN, thickness=2)
+    cv2.polylines(out_img, [points_right], False, GREEN, thickness=2)
+
+    return out_img
 
 def get_radii_m(binary_warped, left_lane_inds, right_lane_inds, left_fit, right_fit):
     nonzero = binary_warped.nonzero()
@@ -148,9 +203,8 @@ def get_radii_m(binary_warped, left_lane_inds, right_lane_inds, left_fit, right_
     leftx = nonzerox[left_lane_inds]
     rightx = nonzerox[right_lane_inds]
     y_eval = 720
-    ym_per_pix = 30/720 # meters per pixel in y dimension
-    xm_per_pix = 3.7/700 # meters per pixel in x dimension
     left_fit_cr = np.polyfit(lefty*ym_per_pix, leftx*xm_per_pix, 2)
+    print(left_fit_cr)
     right_fit_cr = np.polyfit(righty*ym_per_pix, rightx*xm_per_pix, 2)
     # Calculate the new radii of curvature
     left_curverad = ((1 + (2*left_fit_cr[0]*y_eval*ym_per_pix + left_fit_cr[1])**2)**1.5) / np.absolute(2*left_fit_cr[0])
@@ -160,7 +214,6 @@ def get_radii_m(binary_warped, left_lane_inds, right_lane_inds, left_fit, right_
 
 
 def get_offset_m(binary_warped, left_lane_inds, right_lane_inds):
-    xm_per_pix = 3.7/700 # meters per pixel in x dimension
     nonzero = binary_warped.nonzero()
     nonzerox = np.array(nonzero[1])
     leftx = nonzerox[left_lane_inds]
@@ -168,11 +221,24 @@ def get_offset_m(binary_warped, left_lane_inds, right_lane_inds):
     lane_width_px = rightx[-1] - leftx[-1]
     lane_center_px = leftx[-1] + lane_width_px/2
     ideal_center_px = 1280/2
+    print("left {} opt {} center {} right {}".format(leftx[-1], ideal_center_px,\
+                                              lane_center_px, rightx[-1]))
     offset_m = (ideal_center_px-lane_center_px)*xm_per_pix
     return offset_m
 
+def get_offset(left_fit, right_fit):
+    lx = left_fit[0]*720**2 + left_fit[1]*720 + left_fit[2]
+    rx = right_fit[0]*720**2 + right_fit[1]*720 + right_fit[2]
+    #lx = left_fit[2]
+    #rx = right_fit[2]
+    c = lx + (rx-lx)/2
+    cm = (640-c) * xm_per_pix
+    print("teft {} opt {} center {} right {} -> {}".format(lx,\
+            640, c, rx, cm))
+    return cm
+
 def write_text(img, radius, dist):
-    txt = "Radius of Curvature: {:5.2f} m, Vehicle is {:.2f} m {} of the center.".format(
+    txt = "Radius of Curvature: {:5.0f} m, Vehicle is {:.2f} m {} of the center.".format(
     radius, abs(dist), "left" if dist < 0.0 else "right")
     cv2.putText(img, txt, (100, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2)
     return img
@@ -196,4 +262,5 @@ def augment_image_with_lane(image, left_fit, right_fit):
     newwarp = warp_to_lane(color_warp, inverse=True)
     # Combine the result with the original image
     result = cv2.addWeighted(image, 1, newwarp, 0.3, 0)
+
     return result
