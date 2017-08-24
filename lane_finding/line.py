@@ -7,44 +7,49 @@ from lane_finding.fit_lines import xm_per_pix
 
 class Line():
     def __init__(self):
+        # length of averaging window
         self.n = 5
         # was the line detected in the last iteration?
         self.detected = False
+        # list of left polynomials used for averaging
         self.all_left_fits = deque()
+        # list of right polynomials used for averaging
         self.all_right_fits = deque()
-        self.all_cl = deque()
-        self.all_cr = deque()
-        # x values of the last n fits of the line
-        self.recent_xfitted = deque([])
-        #polynomial coefficients averaged over the last n iterations
+        # list of left curvatures used for averaging
+        self.all_left_curvatures = deque()
+        # list of right curvatures used for averaging
+        self.all_right_curvatures = deque()
+        # left polynomial coefficients averaged over the last n iterations
         self.best_fit_left = None
+        # right polynomial coefficients averaged over the last n iterations
         self.best_fit_right = None
-        #radius of curvature of the line in some units
+        # radius of curvature of the line in meters
         self.radius_of_curvature = None
-        #distance in meters of vehicle center from the line
+        # distance in meters of vehicle center from the line
         self.line_base_pos = None
-        #y values for detected line pixels
+        # intersection of the left lane with the bottom of the image
         self.leftx = None
+        # intersection of the right lane with the bottom of the image
         self.rightx = None
 
     def add(self, left_fit, right_fit, cl, cr):
         self.all_left_fits.append(left_fit)
         self.all_right_fits.append(right_fit)
-        self.all_cl.append(cl)
-        self.all_cr.append(cr)
+        self.all_left_curvatures.append(cl)
+        self.all_right_curvatures.append(cr)
         if len(self.all_left_fits) > self.n:
             self.all_left_fits.popleft()
             self.all_right_fits.popleft()
-            self.all_cl.popleft()
-            self.all_cr.popleft()
+            self.all_left_curvatures.popleft()
+            self.all_right_curvatures.popleft()
 
     def average(self):
         self.best_fit_left = np.sum(self.all_left_fits, axis=0) / len(self.all_left_fits)
         self.best_fit_right = np.sum(self.all_right_fits, axis=0) / len(self.all_right_fits)
         self.leftx = self.intersect(self.best_fit_left)
         self.rightx = self.intersect(self.best_fit_right)
-        cl = np.sum(self.all_cl)/len(self.all_cl)
-        cr = np.sum(self.all_cr)/len(self.all_cr)
+        cl = np.sum(self.all_left_curvatures)/len(self.all_left_curvatures)
+        cr = np.sum(self.all_right_curvatures)/len(self.all_right_curvatures)
         self.radius_of_curvature = (cl + cr) / 2
         self.line_base_pos = self.compute_offset()
 
@@ -52,10 +57,9 @@ class Line():
         return fit[0]*720**2 + fit[1]*720 + fit[2]
 
     def compute_offset(self):
-        lx = self.intersect(self.best_fit_left)
-        rx = self.intersect(self.best_fit_right)
-        center = lx + (rx-lx)/2
-        center_m = (640-center) * xm_per_pix
+        ideal_center = 1280 / 2
+        center = self.leftx + (self.rightx-self.leftx)/2
+        center_m = (ideal_center-center) * xm_per_pix
         return center_m
 
     def sane(self, left_fit, right_fit):
